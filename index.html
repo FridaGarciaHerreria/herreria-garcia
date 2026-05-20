@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Herrería García – Presupuestos</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --steel: #1a2332; --steel-mid: #243044; --steel-light: #2e3d55;
+    --accent: #e8b84b; --accent-dark: #c99a2e; --danger: #e85555;
+    --success: #4caf7d; --text: #f0f4f8; --text-muted: #8a9bb0;
+    --border: rgba(255,255,255,0.08); --card: rgba(255,255,255,0.04);
+    --input-bg: rgba(255,255,255,0.06); --radius: 6px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Barlow', sans-serif; background: var(--steel); color: var(--text); min-height: 100vh; font-size: 14px; }
+
+  header { background: linear-gradient(135deg, var(--steel-mid) 0%, var(--steel) 100%); border-bottom: 2px solid var(--accent); padding: 0 24px; display: flex; align-items: center; justify-content: space-between; height: 60px; position: sticky; top: 0; z-index: 100; }
+  .logo { display: flex; align-items: center; gap: 12px; }
+  .logo-icon { width: 36px; height: 36px; background: var(--accent); border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+  .logo-text { font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 20px; letter-spacing: 1px; }
+  .logo-text span { color: var(--accent); }
+  .sync-indicator { font-size: 11px; color: var(--text-muted); display: flex; align-items: center; gap: 5px; }
+  .sync-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--success); display: inline-block; transition: background 0.3s; }
+  .sync-dot.offline { background: var(--danger); }
+  .sync-dot.loading { background: var(--accent); animation: pulse 1s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  nav { display: flex; gap: 4px; }
+  .nav-btn { background: none; border: none; color: var(--text-muted); font-family: 'Barlow Condensed', sans-serif; font-size: 14px; font-weight: 600; letter-spacing: 0.5px; padding: 8px 16px; border-radius: var(--radius); cursor: pointer; transition: all 0.2s; text-transform: uppercase; }
+  .nav-btn:hover { color: var(--text); background: var(--card); }
+  .nav-btn.active { color: var(--accent); background: rgba(232,184,75,0.1); }
+
+  main { padding: 24px; max-width: 1100px; margin: 0 auto; }
+  .view { display: none; }
+  .view.active { display: block; }
+
+  .card { background: var(--steel-mid); border: 1px solid var(--border); border-radius: 8px; padding: 20px; margin-bottom: 16px; }
+  .card-title { font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent); margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .form-grid.three { grid-template-columns: 1fr 1fr 1fr; }
+  .col-span-2 { grid-column: span 2; }
+  .field { display: flex; flex-direction: column; gap: 5px; }
+  .field label { font-size: 11px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; color: var(--text-muted); }
+  .field input { background: var(--input-bg); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); font-family: 'Barlow', sans-serif; font-size: 14px; padding: 9px 12px; outline: none; transition: border-color 0.2s; width: 100%; }
+  .field input:focus { border-color: var(--accent); }
+  .field input::placeholder { color: var(--text-muted); opacity: 0.6; }
+
+  .table-wrap { overflow-x: auto; margin-top: 4px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead th { background: var(--steel-light); font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--text-muted); padding: 10px; text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background 0.15s; }
+  tbody tr:hover { background: var(--card); }
+  tbody td { padding: 6px; vertical-align: middle; }
+  tbody td input { background: transparent; border: 1px solid transparent; border-radius: 4px; color: var(--text); font-family: 'Barlow', sans-serif; font-size: 13px; padding: 5px 8px; width: 100%; outline: none; transition: border-color 0.15s; }
+  tbody td input:focus { border-color: var(--accent); background: var(--input-bg); }
+  tbody td input.num { text-align: right; }
+  .importe-cell { text-align: right; font-weight: 600; color: var(--accent); padding-right: 10px; white-space: nowrap; }
+  .del-btn { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 16px; padding: 4px 8px; border-radius: 4px; transition: all 0.15s; }
+  .del-btn:hover { color: var(--danger); background: rgba(232,85,85,0.1); }
+
+  .totales { display: flex; justify-content: flex-end; margin-top: 16px; }
+  .totales-box { background: var(--steel-light); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 20px; min-width: 240px; }
+  .total-row { display: flex; justify-content: space-between; padding: 4px 0; font-size: 13px; color: var(--text-muted); }
+  .total-row.grand { border-top: 1px solid var(--border); margin-top: 8px; padding-top: 10px; font-family: 'Barlow Condensed', sans-serif; font-size: 18px; font-weight: 700; color: var(--accent); }
+  .total-row span:last-child { font-weight: 600; color: var(--text); }
+  .total-row.grand span:last-child { color: var(--accent); }
+
+  .btn-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 20px; align-items: center; }
+  .btn { font-family: 'Barlow Condensed', sans-serif; font-size: 14px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; padding: 10px 20px; border-radius: var(--radius); border: none; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 7px; }
+  .btn-primary { background: var(--accent); color: var(--steel); }
+  .btn-primary:hover { background: var(--accent-dark); }
+  .btn-secondary { background: var(--steel-light); color: var(--text); border: 1px solid var(--border); }
+  .btn-secondary:hover { background: rgba(255,255,255,0.1); }
+  .btn-success { background: var(--success); color: #fff; }
+  .btn-success:hover { background: #3d9467; }
+  .btn-sm { padding: 7px 14px; font-size: 12px; }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .pres-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
+  .pres-num { font-family: 'Barlow Condensed', sans-serif; font-size: 28px; font-weight: 800; color: var(--accent); letter-spacing: 1px; }
+  .pres-num span { color: var(--text-muted); font-size: 14px; font-weight: 400; }
+
+  .hist-toolbar { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+  .hist-toolbar input { flex: 1; min-width: 180px; background: var(--input-bg); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); font-family: 'Barlow', sans-serif; font-size: 14px; padding: 9px 14px; outline: none; }
+  .hist-toolbar input:focus { border-color: var(--accent); }
+  .hist-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .hist-table thead th { background: var(--steel-light); font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--text-muted); padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border); }
+  .hist-table tbody tr { border-bottom: 1px solid var(--border); transition: background 0.15s; }
+  .hist-table tbody tr:hover { background: var(--card); }
+  .hist-table tbody td { padding: 11px 12px; }
+  .badge { display: inline-block; background: rgba(232,184,75,0.15); color: var(--accent); border-radius: 4px; padding: 2px 8px; font-size: 11px; font-weight: 700; font-family: 'Barlow Condensed', sans-serif; letter-spacing: 0.5px; }
+  .empty-state { text-align: center; padding: 50px 20px; color: var(--text-muted); font-size: 15px; }
+  .empty-state .icon { font-size: 48px; margin-bottom: 12px; display: block; }
+
+  #loading-screen { position: fixed; inset: 0; background: var(--steel); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 999; gap: 16px; }
+  .spinner { width: 36px; height: 36px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+
+  #toast { position: fixed; bottom: 24px; right: 24px; background: var(--success); color: #fff; padding: 12px 20px; border-radius: var(--radius); font-family: 'Barlow Condensed', sans-serif; font-size: 15px; font-weight: 600; letter-spacing: 0.5px; opacity: 0; transform: translateY(10px); transition: all 0.3s; z-index: 999; pointer-events: none; max-width: 280px; }
+  #toast.show { opacity: 1; transform: translateY(0); }
+  #toast.error { background: var(--danger); }
+
+  #pdf-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 200; align-items: center; justify-content: center; padding: 20px; }
+  #pdf-overlay.show { display: flex; }
+  #pdf-box { background: #fff; color: #111; border-radius: 8px; width: 100%; max-width: 1050px; max-height: 90vh; overflow-y: auto; padding: 24px 28px; font-family: Arial, sans-serif; font-size: 11px; position: relative; }
+  #pdf-close { position: sticky; top: 0; float: right; background: #1a2332; color: #fff; border: none; border-radius: 4px; padding: 6px 14px; cursor: pointer; font-size: 13px; margin-bottom: 10px; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; }
+  .pdf-header-bar { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #1a2332; padding-bottom: 14px; margin-bottom: 18px; }
+  .pdf-company h1 { font-family: 'Barlow Condensed', sans-serif; font-size: 22px; font-weight: 800; letter-spacing: 1px; color: #1a2332; margin-bottom: 4px; }
+  .pdf-company p { font-size: 11px; color: #555; line-height: 1.5; }
+  .pdf-meta { text-align: right; font-size: 12px; color: #444; }
+  .pdf-meta strong { font-size: 14px; display: block; color: #1a2332; margin-bottom: 2px; }
+  .pdf-section-title { background: #1a2332; color: #e8b84b; font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; padding: 6px 12px; margin: 16px 0 10px; border-radius: 3px; }
+  .pdf-project-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 20px; font-size: 12px; margin-bottom: 4px; }
+  .pdf-project-grid div { display: flex; gap: 6px; }
+  .pdf-project-grid b { color: #555; font-weight: 600; white-space: nowrap; }
+  .pdf-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 10px; }
+  .pdf-table thead { background: #1a2332; color: #fff; }
+  .pdf-table thead th { padding: 8px 10px; text-align: left; font-weight: 600; font-size: 11px; }
+  .pdf-table thead th.r { text-align: right; }
+  .pdf-table tbody tr:nth-child(even) { background: #f5f7fa; }
+  .pdf-table tbody td { padding: 7px 10px; border-bottom: 1px solid #e8edf2; color: #222; }
+  .pdf-table tbody td.r { text-align: right; }
+  .pdf-totals { display: flex; justify-content: flex-end; margin-top: 16px; }
+  .pdf-totals-box { min-width: 220px; font-size: 13px; }
+  .pdf-total-row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #e8edf2; color: #444; }
+  .pdf-total-row.grand { border-bottom: none; border-top: 2px solid #1a2332; margin-top: 4px; padding-top: 8px; font-family: 'Barlow Condensed', sans-serif; font-size: 17px; font-weight: 800; color: #1a2332; }
+  .pdf-importe-texto { margin-top: 14px; font-size: 11px; font-style: italic; color: #555; border-top: 1px solid #e8edf2; padding-top: 8px; }
+  .pdf-footer { margin-top: 24px; border-top: 2px solid #1a2332; padding-top: 10px; font-size: 10px; color: #888; text-align: center; }
+  .pdf-print-btn { display: block; width: 100%; background: #f0f0f0; color: #111; border: 1px solid #999; padding: 12px; font-family: 'Barlow Condensed', sans-serif; font-size: 16px; font-weight: 700; letter-spacing: 1px; cursor: pointer; border-radius: 4px; margin-top: 20px; }
+
+  @media (max-width: 640px) {
+    header { padding: 0 12px; }
+    .logo-text { font-size: 15px; }
+    .sync-indicator { display: none; }
+    main { padding: 12px; }
+    .form-grid { grid-template-columns: 1fr; }
+    .form-grid.three { grid-template-columns: 1fr 1fr; }
+    .col-span-2 { grid-column: span 1; }
+    #pdf-box { padding: 20px 14px; }
+    .pdf-project-grid { grid-template-columns: 1fr; }
+    .nav-btn { padding: 8px 10px; font-size: 12px; }
+  }
+
+  @media print {
+    @page { size: letter landscape; margin: 10mm 12mm; }
+    * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+    body > * { display: none !important; }
+    #pdf-overlay { display: block !important; position: static !important; background: none !important; padding: 0 !important; overflow: visible !important; }
+    #pdf-box { max-height: none !important; overflow: visible !important; box-shadow: none !important; border-radius: 0 !important; padding: 0 !important; width: 100% !important; max-width: 100% !important; height: auto !important; }
+    #no-print { display: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div id="loading-screen">
+  <div class="logo-text">HERRERÍA <span style="color:#e8b84b">GARCÍA</span></div>
+  <div class="spinner"></div>
+  <p style="color:#8a9bb0;font-size:13px">Conectando con la base de datos...</p>
+</div>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">🔩</div>
+    <div class="logo-text">HERRERÍA <span>GARCÍA</span></div>
+  </div>
+  <div style="display:flex;align-items:center;gap:16px">
+    <div class="sync-indicator">
+      <span class="sync-dot loading" id="sync-dot"></span>
+      <span id="sync-text">Conectando...</span>
+    </div>
+    <nav>
+      <button class="nav-btn active" id="nav-nuevo" onclick="showView('nuevo',this)">＋ Nuevo</button>
+      <button class="nav-btn" id="nav-historial" onclick="showView('historial',this)">Historial</button>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <!-- NUEVO -->
+  <div class="view active" id="view-nuevo">
+    <div class="pres-header">
+      <div>
+        <div class="pres-num"><span>Presupuesto No. </span><span id="num-display">...</span></div>
+        <div style="color:var(--text-muted);font-size:12px;margin-top:4px" id="fecha-display"></div>
+      </div>
+      <div class="btn-row" style="margin:0">
+        <button class="btn btn-secondary btn-sm" onclick="limpiarForm()">🗑 Limpiar</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📁 Datos del Proyecto</div>
+      <div class="form-grid">
+        <div class="field col-span-2">
+          <label>Nombre del Proyecto / Descripción</label>
+          <input type="text" id="f-proyecto" placeholder="Ej. PRESUPUESTO FUNCIONAL DEL MÚLTIPLE DE 14&quot; X 3.93">
+        </div>
+        <div class="field"><label>Especialidad</label><input type="text" id="f-especialidad" placeholder="Ej. PAILERIA HIDRAULICA"></div>
+        <div class="field"><label>Analista</label><input type="text" id="f-analista" placeholder="Nombre del analista"></div>
+        <div class="field"><label>Responsable</label><input type="text" id="f-responsable" placeholder="Ej. SHEILA"></div>
+        <div class="field"><label>Lugar / Obra</label><input type="text" id="f-lugar" placeholder="Ej. OBRA TONALTECAS"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🏢 Datos del Cliente</div>
+      <div class="form-grid three">
+        <div class="field"><label>Nombre / Empresa</label><input type="text" id="f-cliente" placeholder="Ej. CONSTRUCTORA YACUMA"></div>
+        <div class="field"><label>RFC</label><input type="text" id="f-rfc" placeholder="Ej. CYA850101ABC"></div>
+        <div class="field"><label>Teléfono</label><input type="text" id="f-telefono" placeholder="Ej. 33 1234 5678"></div>
+        <div class="field col-span-2"><label>Dirección del cliente</label><input type="text" id="f-direccion-cliente" placeholder="Calle, número, colonia, ciudad"></div>
+        <div class="field"><label>Unidad / Referencia</label><input type="text" id="f-unidad" placeholder="Ej. CARRETE 14&quot; X 50 CM..."></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📋 Análisis de Partidas</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:42%">Descripción</th>
+              <th style="width:10%">Unidad</th>
+              <th style="width:14%">Costo Unit.</th>
+              <th style="width:10%">Cantidad</th>
+              <th style="width:14%">Importe</th>
+              <th style="width:6%"></th>
+            </tr>
+          </thead>
+          <tbody id="partidas-body"></tbody>
+        </table>
+      </div>
+      <div style="margin-top:12px">
+        <button class="btn btn-secondary btn-sm" onclick="agregarPartida()">＋ Agregar partida</button>
+      </div>
+    </div>
+
+    <div class="totales">
+      <div class="totales-box">
+        <div class="total-row"><span>Subtotal</span><span id="t-subtotal">$0.00</span></div>
+        <div class="total-row"><span>IVA 16%</span><span id="t-iva">$0.00</span></div>
+        <div class="total-row grand"><span>TOTAL</span><span id="t-total">$0.00</span></div>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="btn-guardar" onclick="guardarPresupuesto()">💾 Guardar Presupuesto</button>
+      <button class="btn btn-success" onclick="previsualizarPDF()">📄 Vista Previa PDF</button>
+    </div>
+  </div>
+
+  <!-- HISTORIAL -->
+  <div class="view" id="view-historial">
+    <div class="card">
+      <div class="card-title">📚 Historial de Presupuestos</div>
+      <div class="hist-toolbar">
+        <input type="text" id="search-hist" placeholder="🔍  Buscar por cliente, proyecto o número..." oninput="filtrarHistorial()">
+        <input type="date" id="search-fecha" oninput="filtrarHistorial()" style="max-width:160px">
+      </div>
+      <div class="table-wrap">
+        <table class="hist-table">
+          <thead>
+            <tr>
+              <th>No.</th><th>Fecha</th><th>Proyecto</th><th>Cliente</th><th>Total</th><th></th>
+            </tr>
+          </thead>
+          <tbody id="hist-body"></tbody>
+        </table>
+        <div id="hist-loading" class="empty-state"><span class="icon">⏳</span>Cargando...</div>
+        <div id="hist-empty" class="empty-state" style="display:none"><span class="icon">📂</span>No hay presupuestos guardados aún.</div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div id="pdf-overlay">
+  <div id="pdf-box">
+    <div id="no-print" style="display:flex;gap:10px;margin-bottom:12px">
+      <button onclick="document.getElementById('pdf-overlay').classList.remove('show')" style="background:#555;color:#fff;border:none;border-radius:4px;padding:7px 16px;cursor:pointer;font-weight:700;font-size:14px">✕ Cerrar</button>
+      <button onclick="window.print()" style="background:#4caf7d;color:#fff;border:none;border-radius:4px;padding:7px 16px;cursor:pointer;font-weight:700;font-size:14px">🖨 Imprimir / PDF</button>
+    </div>
+    <div id="pdf-content"></div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, doc, addDoc, setDoc, deleteDoc, getDoc, query, orderBy, onSnapshot, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAEaz1oKSbVS1ENHW8HOFItW_oCXhd8H1A",
+  authDomain: "herreria-garcia.firebaseapp.com",
+  projectId: "herreria-garcia",
+  storageBucket: "herreria-garcia.firebasestorage.app",
+  messagingSenderId: "690605011570",
+  appId: "1:690605011570:web:df69b763c2b375c5b508eb"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+let presupuestos = [];
+let editandoId = null;
+let siguienteNum = 512;
+
+// ── INIT ──
+async function init() {
+  try {
+    const metaRef = doc(db, 'meta', 'config');
+    const metaSnap = await getDoc(metaRef);
+    if (metaSnap.exists()) {
+      siguienteNum = metaSnap.data().siguienteNum || 512;
+    } else {
+      await setDoc(metaRef, { siguienteNum: 512 });
+    }
+    actualizarNumDisplay();
+
+    const q = query(collection(db, 'presupuestos'), orderBy('fechaISO', 'desc'));
+    onSnapshot(q, (snap) => {
+      presupuestos = snap.docs.map(d => ({ firestoreId: d.id, ...d.data() }));
+      renderHistorial();
+      setSyncStatus('online');
+    }, (err) => { setSyncStatus('offline'); console.error(err); });
+
+    document.getElementById('loading-screen').style.display = 'none';
+    actualizarFecha();
+    agregarPartida(); agregarPartida(); agregarPartida();
+
+  } catch(e) {
+    document.getElementById('loading-screen').innerHTML = `
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:800">HERRERÍA <span style="color:#e8b84b">GARCÍA</span></div>
+      <p style="color:#e85555;margin-top:16px">❌ Error de conexión</p>
+      <p style="color:#8a9bb0;font-size:12px;margin-top:8px">${e.message}</p>
+      <button onclick="location.reload()" style="margin-top:20px;padding:10px 24px;background:#e8b84b;border:none;border-radius:6px;font-weight:700;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-size:15px">Reintentar</button>
+    `;
+  }
+}
+
+function setSyncStatus(s) {
+  const dot = document.getElementById('sync-dot');
+  const txt = document.getElementById('sync-text');
+  dot.className = 'sync-dot ' + s;
+  txt.textContent = s === 'online' ? 'Sincronizado' : s === 'offline' ? 'Sin conexión' : 'Sincronizando...';
+}
+
+function actualizarFecha() {
+  document.getElementById('fecha-display').textContent =
+    new Date().toLocaleDateString('es-MX', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+}
+
+function actualizarNumDisplay() {
+  document.getElementById('num-display').textContent = String(siguienteNum).padStart(5,'0');
+}
+
+function fmt(n) {
+  return (n||0).toLocaleString('es-MX', { minimumFractionDigits:2, maximumFractionDigits:2 });
+}
+
+// ── VIEWS ──
+window.showView = function(v, btn) {
+  document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById('view-' + v).classList.add('active');
+  if (btn) btn.classList.add('active');
+};
+
+// ── PARTIDAS ──
+window.agregarPartida = function(desc='', unidad='', costo='', cantidad='') {
+  const tbody = document.getElementById('partidas-body');
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td><input type="text" placeholder="Descripción del material o servicio" value="${desc}" oninput="calcular()"></td>
+    <td><input type="text" placeholder="PZA" value="${unidad}" style="width:70px" oninput="calcular()"></td>
+    <td><input type="text" class="num" placeholder="0.00" value="${costo}" oninput="calcular()"></td>
+    <td><input type="text" class="num" placeholder="1" value="${cantidad}" oninput="calcular()"></td>
+    <td class="importe-cell">$0.00</td>
+    <td><button class="del-btn" onclick="this.closest('tr').remove();calcular()" title="Eliminar">✕</button></td>
+  `;
+  tbody.appendChild(tr);
+  calcular();
+};
+
+window.calcular = function() {
+  let subtotal = 0;
+  document.querySelectorAll('#partidas-body tr').forEach(tr => {
+    const inputs = tr.querySelectorAll('input');
+    const costo = parseFloat(inputs[2].value) || 0;
+    const cantidad = parseFloat(inputs[3].value) || 0;
+    const importe = costo * cantidad;
+    subtotal += importe;
+    tr.querySelector('.importe-cell').textContent = '$' + fmt(importe);
+  });
+  const iva = subtotal * 0.16;
+  const total = subtotal + iva;
+  document.getElementById('t-subtotal').textContent = '$' + fmt(subtotal);
+  document.getElementById('t-iva').textContent = '$' + fmt(iva);
+  document.getElementById('t-total').textContent = '$' + fmt(total);
+  return { subtotal, iva, total };
+};
+
+function getDatos() {
+  const partidas = [];
+  document.querySelectorAll('#partidas-body tr').forEach(tr => {
+    const inputs = tr.querySelectorAll('input');
+    const desc = inputs[0].value.trim();
+    const unidad = inputs[1].value.trim();
+    const costo = parseFloat(inputs[2].value) || 0;
+    const cantidad = parseFloat(inputs[3].value) || 0;
+    if (desc || costo) partidas.push({ desc, unidad, costo, cantidad, importe: costo * cantidad });
+  });
+  const { subtotal, iva, total } = calcular();
+  return {
+    proyecto: document.getElementById('f-proyecto').value.trim(),
+    especialidad: document.getElementById('f-especialidad').value.trim(),
+    analista: document.getElementById('f-analista').value.trim(),
+    responsable: document.getElementById('f-responsable').value.trim(),
+    lugar: document.getElementById('f-lugar').value.trim(),
+    cliente: document.getElementById('f-cliente').value.trim(),
+    rfc: document.getElementById('f-rfc').value.trim(),
+    telefono: document.getElementById('f-telefono').value.trim(),
+    direccionCliente: document.getElementById('f-direccion-cliente').value.trim(),
+    unidad: document.getElementById('f-unidad').value.trim(),
+    partidas, subtotal, iva, total
+  };
+}
+
+// ── GUARDAR ──
+window.guardarPresupuesto = async function() {
+  const datos = getDatos();
+  if (!datos.proyecto) { toast('Escribe el nombre del proyecto', true); return; }
+  if (datos.partidas.length === 0) { toast('Agrega al menos una partida', true); return; }
+
+  const btn = document.getElementById('btn-guardar');
+  btn.disabled = true; btn.textContent = '⏳ Guardando...';
+  setSyncStatus('loading');
+
+  try {
+    const now = new Date();
+    const fechaStr = now.toLocaleDateString('es-MX',{day:'2-digit',month:'2-digit',year:'numeric'}) + ' ' +
+                     now.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
+
+    if (editandoId) {
+      const p = presupuestos.find(x => x.firestoreId === editandoId);
+      await setDoc(doc(db, 'presupuestos', editandoId), {
+        ...datos, num: p.num, fechaISO: p.fechaISO, fechaStr: p.fechaStr,
+        actualizadoISO: now.toISOString(), actualizadoStr: fechaStr
+      });
+      toast('✅ Presupuesto actualizado');
+      editandoId = null;
+    } else {
+      const metaRef = doc(db, 'meta', 'config');
+      let numUsado = siguienteNum;
+      await runTransaction(db, async (tx) => {
+        const snap = await tx.get(metaRef);
+        numUsado = snap.exists() ? (snap.data().siguienteNum || 512) : 512;
+        tx.set(metaRef, { siguienteNum: numUsado + 1 });
+      });
+      siguienteNum = numUsado + 1;
+      actualizarNumDisplay();
+      await addDoc(collection(db, 'presupuestos'), {
+        ...datos, num: numUsado, fechaISO: now.toISOString(), fechaStr
+      });
+      toast('✅ Presupuesto #' + String(numUsado).padStart(5,'0') + ' guardado');
+    }
+    limpiarForm();
+  } catch(e) {
+    toast('Error al guardar: ' + e.message, true);
+  }
+  btn.disabled = false; btn.textContent = '💾 Guardar Presupuesto';
+};
+
+// ── LIMPIAR ──
+window.limpiarForm = function() {
+  ['f-proyecto','f-especialidad','f-analista','f-responsable','f-lugar',
+   'f-cliente','f-rfc','f-telefono','f-direccion-cliente','f-unidad'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('partidas-body').innerHTML = '';
+  agregarPartida(); agregarPartida(); agregarPartida();
+  editandoId = null;
+  actualizarNumDisplay();
+};
+
+// ── HISTORIAL ──
+window.filtrarHistorial = function() {
+  renderHistorial(document.getElementById('search-hist').value, document.getElementById('search-fecha').value);
+};
+
+function renderHistorial(filtro='', fecha='') {
+  const tbody = document.getElementById('hist-body');
+  const empty = document.getElementById('hist-empty');
+  const loading = document.getElementById('hist-loading');
+  tbody.innerHTML = '';
+  loading.style.display = 'none';
+
+  const lista = presupuestos.filter(p => {
+    const txt = (p.proyecto + p.cliente + String(p.num)).toLowerCase();
+    return (!filtro || txt.includes(filtro.toLowerCase())) &&
+           (!fecha || (p.fechaISO && p.fechaISO.startsWith(fecha)));
+  });
+
+  empty.style.display = lista.length === 0 ? 'block' : 'none';
+
+  lista.forEach(p => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><span class="badge">${String(p.num).padStart(5,'0')}</span></td>
+      <td style="color:var(--text-muted);font-size:12px">${p.fechaStr||''}</td>
+      <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.proyecto||'—'}</td>
+      <td>${p.cliente||'—'}</td>
+      <td style="font-weight:600;color:var(--accent)">$${fmt(p.total)}</td>
+      <td style="white-space:nowrap">
+        <button class="btn btn-secondary btn-sm" onclick="editarPresupuesto('${p.firestoreId}')" style="margin-right:4px">✏️</button>
+        <button class="btn btn-secondary btn-sm" onclick="verPDF('${p.firestoreId}')">📄</button>
+        <button class="btn btn-secondary btn-sm" onclick="eliminarRegistro('${p.firestoreId}')" style="margin-left:4px;color:var(--danger)">🗑</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+window.eliminarRegistro = async function(fid) {
+  if (!confirm('¿Eliminar este presupuesto? No se puede deshacer.')) return;
+  try {
+    await deleteDoc(doc(db, 'presupuestos', fid));
+    toast('Presupuesto eliminado');
+  } catch(e) { toast('Error al eliminar', true); }
+};
+
+window.editarPresupuesto = function(fid) {
+  const p = presupuestos.find(x => x.firestoreId === fid);
+  if (!p) return;
+  editandoId = fid;
+  document.getElementById('f-proyecto').value = p.proyecto||'';
+  document.getElementById('f-especialidad').value = p.especialidad||'';
+  document.getElementById('f-analista').value = p.analista||'';
+  document.getElementById('f-responsable').value = p.responsable||'';
+  document.getElementById('f-lugar').value = p.lugar||'';
+  document.getElementById('f-cliente').value = p.cliente||'';
+  document.getElementById('f-rfc').value = p.rfc||'';
+  document.getElementById('f-telefono').value = p.telefono||'';
+  document.getElementById('f-direccion-cliente').value = p.direccionCliente||'';
+  document.getElementById('f-unidad').value = p.unidad||'';
+  document.getElementById('partidas-body').innerHTML = '';
+  (p.partidas||[]).forEach(pt => agregarPartida(pt.desc, pt.unidad, pt.costo, pt.cantidad));
+  document.getElementById('num-display').textContent = String(p.num).padStart(5,'0');
+  showView('nuevo', document.getElementById('nav-nuevo'));
+  window.scrollTo(0,0);
+  toast('Editando presupuesto #' + String(p.num).padStart(5,'0'));
+};
+
+// ── PDF ──
+function buildPDF(p) {
+  const fmtMXN = n => '$' + fmt(n);
+  const filas = (p.partidas||[]).map((pt, i) => `
+    <tr style="background:${i%2===1?'#f5f5f5':'#fff'}">
+      <td style="padding:5px 8px;border-bottom:1px solid #ddd;font-size:11px;color:#111">${pt.desc}</td>
+      <td style="padding:5px 8px;border-bottom:1px solid #ddd;font-size:11px;text-align:center;color:#111">${pt.unidad}</td>
+      <td style="padding:5px 8px;border-bottom:1px solid #ddd;font-size:11px;text-align:right;color:#111">${fmtMXN(pt.costo)}</td>
+      <td style="padding:5px 8px;border-bottom:1px solid #ddd;font-size:11px;text-align:right;color:#111">${pt.cantidad}</td>
+      <td style="padding:5px 8px;border-bottom:1px solid #ddd;font-size:11px;text-align:right;font-weight:700;color:#111">${fmtMXN(pt.importe)}</td>
+    </tr>
+  `).join('');
+  const pesos = Math.floor(p.total||0);
+  const centavos = Math.round(((p.total||0) - pesos) * 100);
+  const enLetras = `(${numberToWords(pesos)} PESOS ${String(centavos).padStart(2,'0')}/100 M.N.)`;
+
+  return `
+  <div style="font-family:'Arial',sans-serif;color:#111;width:100%;font-size:11px">
+
+    <!-- ENCABEZADO: igual al original, solo texto, línea divisora -->
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #111;padding-bottom:8px;margin-bottom:8px">
+      <div>
+        <div style="font-size:18px;font-weight:900;letter-spacing:1px;color:#111">HERRERÍA GARCÍA</div>
+        <div style="font-size:9px;color:#111;margin-top:2px">SANTA MERCEDES NO. 813, COL. SANTA MARGARITA, C.P. 45140</div>
+        <div style="font-size:9px;color:#111">ZAPOPAN, JALISCO, MEXICO</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:10px;color:#111">Presupuesto No. <strong style="font-size:14px">${String(p.num).padStart(5,'0')}</strong></div>
+        <div style="font-size:10px;color:#111;margin-top:2px">Fecha: ${p.fechaStr||''}</div>
+      </div>
+    </div>
+
+    <!-- DATOS DEL PROYECTO: título en negrita, sin fondo de color -->
+    <div style="font-size:10px;font-weight:700;color:#111;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px">Datos del Proyecto</div>
+    <table style="width:100%;border-collapse:collapse;margin-bottom:6px;font-size:10px">
+      <tr>
+        <td style="padding:2px 4px;width:40%"><strong>Proyecto: </strong>${p.proyecto||''}</td>
+        <td style="padding:2px 4px;width:25%"><strong>Lugar: </strong>${p.lugar||''}</td>
+        <td style="padding:2px 4px;width:30%"><strong>Responsable: </strong>${p.responsable||''}</td>
+      </tr>
+      <tr>
+        <td style="padding:2px 4px"><strong>Especialidad: </strong>${p.especialidad||''}</td>
+        <td style="padding:2px 4px" colspan="2"><strong>Analista: </strong>${p.analista||''}</td>
+      </tr>
+    </table>
+
+    <!-- NOMBRE / UNIDAD -->
+    <div style="font-size:10px;margin:4px 0 6px;border-top:1px solid #aaa;padding-top:4px">
+      <strong>Nombre: </strong>${p.cliente||''}&nbsp;&nbsp;&nbsp;&nbsp;
+      <strong>Unidad: </strong>${p.unidad||''}
+    </div>
+
+    <!-- TABLA: encabezado gris muy claro, filas alternadas gris mínimo -->
+    <table style="width:100%;border-collapse:collapse;border:1px solid #bbb">
+      <thead>
+        <tr style="background:#ebebeb">
+          <th style="padding:6px 8px;text-align:left;font-size:10px;font-weight:700;color:#111;width:48%;border:1px solid #bbb">Descripción</th>
+          <th style="padding:6px 8px;text-align:center;font-size:10px;font-weight:700;color:#111;width:9%;border:1px solid #bbb">Unidad</th>
+          <th style="padding:6px 8px;text-align:right;font-size:10px;font-weight:700;color:#111;width:13%;border:1px solid #bbb">Costo</th>
+          <th style="padding:6px 8px;text-align:right;font-size:10px;font-weight:700;color:#111;width:10%;border:1px solid #bbb">Cantidad</th>
+          <th style="padding:6px 8px;text-align:right;font-size:10px;font-weight:700;color:#111;width:14%;border:1px solid #bbb">Importe</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${filas}
+      </tbody>
+    </table>
+
+    <!-- TOTALES + LETRAS -->
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-top:10px">
+      <div style="font-size:10px;font-style:italic;color:#111;max-width:55%;padding-top:4px">${enLetras}</div>
+      <div style="min-width:220px;border:1px solid #bbb">
+        <div style="display:flex;justify-content:space-between;padding:4px 10px;border-bottom:1px solid #bbb;font-size:11px">
+          <span>Subtotal</span><span style="font-weight:600">${fmtMXN(p.subtotal)}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:4px 10px;border-bottom:1px solid #bbb;font-size:11px">
+          <span>Impuesto 16%</span><span style="font-weight:600">${fmtMXN(p.iva)}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:5px 10px;background:#ebebeb;font-size:12px;font-weight:800;color:#111">
+          <span>Total</span><span>${fmtMXN(p.total)}</span>
+        </div>
+      </div>
+    </div>
+
+
+  </div>
+  `;
+}
+
+window.previsualizarPDF = function() {
+  const datos = getDatos();
+  if (!datos.proyecto) { toast('Escribe el nombre del proyecto primero', true); return; }
+  const now = new Date();
+  const p = {
+    ...datos,
+    num: editandoId ? presupuestos.find(x=>x.firestoreId===editandoId).num : siguienteNum,
+    fechaStr: now.toLocaleDateString('es-MX',{day:'2-digit',month:'2-digit',year:'numeric'}) + ' ' +
+              now.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'})
+  };
+  document.getElementById('pdf-content').innerHTML = buildPDF(p);
+  document.getElementById('pdf-overlay').classList.add('show');
+};
+
+window.verPDF = function(fid) {
+  const p = presupuestos.find(x => x.firestoreId === fid);
+  if (!p) return;
+  document.getElementById('pdf-content').innerHTML = buildPDF(p);
+  document.getElementById('pdf-overlay').classList.add('show');
+};
+
+// ── TOAST ──
+window.toast = function(msg, error=false) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'show' + (error ? ' error' : '');
+  setTimeout(() => el.className = '', 3200);
+};
+
+// ── NÚMEROS EN PALABRAS ──
+function numberToWords(n) {
+  if (n === 0) return 'CERO';
+  const ones = ['','UN','DOS','TRES','CUATRO','CINCO','SEIS','SIETE','OCHO','NUEVE','DIEZ','ONCE','DOCE','TRECE','CATORCE','QUINCE','DIECISÉIS','DIECISIETE','DIECIOCHO','DIECINUEVE'];
+  const tens = ['','','VEINTE','TREINTA','CUARENTA','CINCUENTA','SESENTA','SETENTA','OCHENTA','NOVENTA'];
+  const hundreds = ['','CIENTO','DOSCIENTOS','TRESCIENTOS','CUATROCIENTOS','QUINIENTOS','SEISCIENTOS','SETECIENTOS','OCHOCIENTOS','NOVECIENTOS'];
+  function b(num) {
+    if (!num) return '';
+    if (num===100) return 'CIEN';
+    if (num<20) return ones[num];
+    if (num<100) { const t=Math.floor(num/10),o=num%10; return tens[t]+(o?' Y '+ones[o]:''); }
+    const h=Math.floor(num/100),r=num%100; return hundreds[h]+(r?' '+b(r):'');
+  }
+  let res='';
+  if (n>=1000000) { const m=Math.floor(n/1000000); res+=(m===1?'UN MILLÓN':b(m)+' MILLONES')+' '; n%=1000000; }
+  if (n>=1000) { const k=Math.floor(n/1000); res+=(k===1?'MIL':b(k)+' MIL')+' '; n%=1000; }
+  if (n>0) res+=b(n);
+  return res.trim();
+}
+
+init();
+</script>
+</body>
+</html>
